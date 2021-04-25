@@ -1,7 +1,12 @@
 import numpy as np
 import requests
 
-def sample_area_around(rlayer, x, y, r=16):
+def sample_area_around_old(rlayer, x, y, r=16):
+    """
+    Old version of the func
+    is too slow
+    use sample_area_around()
+    """
     xvalues = np.arange(x-r, x+r)
     yvalues = np.arange(y-r, y+r)
     output = []
@@ -10,6 +15,38 @@ def sample_area_around(rlayer, x, y, r=16):
             val, res = rlayer.dataProvider().sample(QgsPointXY(x, y), 1)
             output.append(val)
     return output
+
+def showme(pixels):
+    arr = np.array(pixels)
+    a = int(np.sqrt(len(pixels)))
+    arr = arr.reshape(a, a)
+    plt.imshow(arr)
+    plt.show()
+
+
+def get_pixels_from_rlayer(rlayer, x, y, w, h):
+    dp = rlayer.dataProvider()
+    rec = QgsRectangle(QgsPointXY(x, y), QgsPointXY(x+w, y-h))
+    out = dp.block(1, rec, w, h).data()
+    return out
+
+def sample_area_around(rlayer, x, y, r=16):
+    _y = y-1 #off-by-one thing.
+    dp = rlayer.dataProvider()
+    rec = QgsRectangle(QgsPointXY(x-r, _y-r), QgsPointXY(x+r, _y+r))
+    w = int(r*2)
+    h = int(r*2)
+    out = dp.block(1, rec, w, h)
+    output = [x[0] for x in out.data()]
+    return output
+
+def rawd(rlayer, x, y, r=16):
+    dp = rlayer.dataProvider()
+    rec = QgsRectangle(QgsPointXY(x-r, y-r), QgsPointXY(x+r, y+r))
+    w = int(r*2)
+    h = int(r*2)
+    out = dp.block(1, rec, w, h)
+    return out
 
 def make_request(pixels):
     url = "http://localhost:8501/detect/"
