@@ -6,6 +6,7 @@ NOTE: This codebase was forked in 2021 from [circle-craters](https://github.com/
 
 A crater-counting python plugin for `QGIS` augmented with machine learning to reduce the amount of time it takes to get a crater count.<br><br>
 
+
 Current Status: In Development<br><br>
 
 The software is designed for a human annotator to provide the approximate location of a crater feature, and the machine learning system measures and estimates the exact position and circumference of the feature (modeled as a perfect circle in pixel space). The desired user experience is to generate a good crater annotation with a single click.<br><br>
