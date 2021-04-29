@@ -1,6 +1,7 @@
 import numpy as np
 import requests
-from qgis.core import QgsPointXY
+import json
+from qgis.core import QgsPointXY, QgsRectangle
 import math
 
 
@@ -167,14 +168,18 @@ class Circle(object):
     def __repr__(self):
         return 'Circle(%s, %s, %s)' % self.vertices
 
-def sample_area_around(rlayer, x, y, r=16):
-    xvalues = np.arange(x-r, x+r)
-    yvalues = np.arange(y-r, y+r)
-    output = []
-    for y in yvalues[::-1]:
-        for x in xvalues:
-            val, res = rlayer.dataProvider().sample(QgsPointXY(x, y), 1)
-            output.append(val)
+def sample_area_around(rlayer, x, y, r=16, debug=False):
+    if debug:
+        print('Sampling area around: ', x, y, r)
+    _y = y-1 #off-by-one thing.
+    dp = rlayer.dataProvider()
+    rec = QgsRectangle(QgsPointXY(x-r, _y-r), QgsPointXY(x+r, _y+r))
+    w = int(r*2)
+    h = int(r*2)
+    out = dp.block(1, rec, w, h)
+    output = [x[0] for x in out.data()]
+    if debug:
+        showme(output)
     return output
 
 def make_request(pixels):
@@ -183,11 +188,26 @@ def make_request(pixels):
     r = requests.post(url=url, json=body)
     return r.json()
 
+def log_data(x, y, r, pixels, x_, y_, r_):
+    logdir = '/tmp/crats.log'
+    data = {
+        "x":x,
+        "y":y,
+        "r":r,
+        "pixels":pixels,
+        "x_":x_,
+        "y_":y_,
+        "r_":r_
+    }
+    with open(logdir, 'a') as f:
+        f.write(json.dumps(data) + "\n")
+
 def do_detection(rlayer, x, y, r=16):
     pixels = sample_area_around(rlayer, x, y, r=r)
     response = make_request(pixels)
-    x, y, r = response['predictions']
-    return x, y, r
+    x_, y_, r_ = response['predictions']
+    log_data(x, y, r, pixels, x_, y_, r_)
+    return x_, y_, r_
 
 class DetectedCircle(object):
     def __init__(self, rlayer, x_in, y_in, r_in=16):
